@@ -1,4 +1,4 @@
-package = "lua-string-test"
+package = "oxd-web-lua"
 version = "1.0-0"
 source = {
   url = "git://github.com/GluuFederation/oxd-web-lua"
