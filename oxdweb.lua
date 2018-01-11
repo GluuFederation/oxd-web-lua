@@ -24,7 +24,8 @@ function _M.execute_http(conf, jsonBody, token, command)
     local res, err = httpc:request_uri(conf.oxd_host .. "/" .. command, {
         method = "POST",
         body = jsonBody,
-        headers = headers
+        headers = headers,
+        ssl_verify = false
     })
 
     ngx.log(ngx.DEBUG, "Host: " .. conf.oxd_host .. "/" .. command .. " Request_Body:" .. jsonBody .. " response_body: " .. res.body)
