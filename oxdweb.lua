@@ -118,4 +118,10 @@ function _M.uma_rp_get_claims_gathering_url(conf, token)
     return response
 end
 
+function _M.introspect_access_token(conf)
+    local commandAsJson = json:encode(conf)
+    local response = _M.execute_http(conf, commandAsJson, nil, "introspect-access-token")
+    return response
+end
+
 return _M
