@@ -124,4 +124,10 @@ function _M.introspect_access_token(conf)
     return response
 end
 
+function _M.introspect_rpt(conf)
+    local commandAsJson = json:encode(conf)
+    local response = _M.execute_http(conf, commandAsJson, nil, "introspect-rpt")
+    return response
+end
+
 return _M
