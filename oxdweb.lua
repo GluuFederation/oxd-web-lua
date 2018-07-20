@@ -1,7 +1,7 @@
 local http = require "resty.http"
 local cjson = require "cjson.safe"
 
-function _M.execute_http(oxd_host, command, token, jsonBody)
+function execute_http(oxd_host, command, token, jsonBody)
     ngx.log(ngx.DEBUG, "Executing command: ", command)
     local httpc = http.new()
     local headers = {
@@ -43,27 +43,27 @@ end
 -- @param token: access token
 -- @return response:
 local api_with_token = {
-    get_authorization_url,
-    get_token_by_code,
-    get_user_info,
-    get_logout_uri,
-    get_access_token_by_refresh_token,
-    uma_rs_protect,
-    uma_rs_check_access,
-    uma_rp_get_rpt,
-    uma_rp_get_claims_gathering_url,
+    "get_authorization_url",
+    "get_token_by_code",
+    "get_user_info",
+    "get_logout_uri",
+    "get_access_token_by_refresh_token",
+    "uma_rs_protect",
+    "uma_rs_check_access",
+    "uma_rp_get_rpt",
+    "uma_rp_get_claims_gathering_url",
+    "register_site",
+    "update_site",
+    "introspect_access_token",
+    "introspect_rpt",
 }
 
 -- @param oxd_host: host/port of oxd server
 -- @param params: request parameters to be encoded as JSON
 -- @return response:
 local api_without_token = {
-    setup_client,
-    get_client_token,
-    register_site,
-    update_site,
-    introspect_access_token,
-    introspect_rpt,
+    "setup_client",
+    "get_client_token",
 }
 
 local _M = {}
@@ -72,8 +72,8 @@ for i= 1, #api_with_token do
     local api = api_with_token[i]
     local endpoint = api:gsub("_", "%-")
     _M[api] = function(oxd_host, params, token)
-        local commandAsJson = cjson:encode(params)
-        return execute_http(oxd_host, endpoint, params, token, commandAsJson)
+        local commandAsJson = cjson.encode(params)
+        return execute_http(oxd_host, endpoint, token, commandAsJson)
     end
 end
 
@@ -81,8 +81,8 @@ for i= 1, #api_without_token do
     local api = api_without_token[i]
     local endpoint = api:gsub("_", "%-")
     _M[api] = function(oxd_host, params)
-        local commandAsJson = cjson:encode(params)
-        return execute_http(oxd_host, endpoint, params, nil, commandAsJson)
+        local commandAsJson = cjson.encode(params)
+        return execute_http(oxd_host, endpoint, nil, commandAsJson)
     end
 end
 
