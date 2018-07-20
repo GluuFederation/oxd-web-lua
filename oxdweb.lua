@@ -1,16 +1,8 @@
 local http = require "resty.http"
-local cjson = require "cjson"
-local json = require "JSON"
+local cjson = require "cjson.safe"
 
-local _M = {}
-
-local function decode(string_data)
-    local response = cjson.decode(string_data)
-    return response
-end
-
-function _M.execute_http(conf, jsonBody, token, command)
-    ngx.log(ngx.DEBUG, "Executing command: " .. command)
+function _M.execute_http(oxd_host, command, token, jsonBody)
+    ngx.log(ngx.DEBUG, "Executing command: ", command)
     local httpc = http.new()
     local headers = {
         ["Content-Type"] = "application/json"
@@ -18,116 +10,80 @@ function _M.execute_http(conf, jsonBody, token, command)
 
     if token ~= nil then
         headers.Authorization = "Bearer " .. token
-        ngx.log(ngx.DEBUG, "Header token: " .. headers.Authorization)
+        ngx.log(ngx.DEBUG, "Header token: ", headers.Authorization)
     end
 
-    local res, err = httpc:request_uri(conf.oxd_host .. "/" .. command, {
+    local res, err = httpc:request_uri(oxd_host .. "/" .. command, {
         method = "POST",
         body = jsonBody,
         headers = headers,
         ssl_verify = false
     })
 
-    ngx.log(ngx.DEBUG, "Host: " .. conf.oxd_host .. "/" .. command .. " Request_Body:" .. jsonBody .. " response_body: " .. res.body)
+    if err then
+        ngx.log(ngx.ERR, "HTTP error: ", err)
+        return { status = "error", description = "HTTP error: ", err }
+    end
 
-    if pcall(decode, res.body) then
-        return decode(res.body)
-    else
-        return { status = "error", description = "Please see the oxd log" }
+    ngx.log(ngx.DEBUG, "Host: ", oxd_host, "/", command, " Request_Body:", jsonBody, " response_body: ", res.body)
+
+    local response, err = cjson.decode(res.body)
+    if err then
+        ngx.log(ngx.ERR, "JSON decode error: ", err)
+        return { status = "error", description = "JSON decode error: ", err }
+    end
+
+    return response
+end
+
+
+-- all APIs below have next signature:
+-- @param oxd_host: host/port of oxd server
+-- @param params: request parameters to be encoded as JSON
+-- @param token: access token
+-- @return response:
+local api_with_token = {
+    get_authorization_url,
+    get_token_by_code,
+    get_user_info,
+    get_logout_uri,
+    get_access_token_by_refresh_token,
+    uma_rs_protect,
+    uma_rs_check_access,
+    uma_rp_get_rpt,
+    uma_rp_get_claims_gathering_url,
+}
+
+-- @param oxd_host: host/port of oxd server
+-- @param params: request parameters to be encoded as JSON
+-- @return response:
+local api_without_token = {
+    setup_client,
+    get_client_token,
+    register_site,
+    update_site,
+    introspect_access_token,
+    introspect_rpt,
+}
+
+local _M = {}
+
+for i= 1, #api_with_token do
+    local api = api_with_token[i]
+    local endpoint = api:gsub("_", "%-")
+    _M[api] = function(oxd_host, params, token)
+        local commandAsJson = cjson:encode(params)
+        return execute_http(oxd_host, endpoint, params, token, commandAsJson)
     end
 end
 
-function _M.setup_client(conf)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, nil, "setup-client")
-
-    return response
-end
-
-function _M.get_client_token(conf)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, nil, "get-client-token")
-    return response
-end
-
-function _M.register_site(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "register-site")
-
-    return response
-end
-
-function _M.update_site(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "update-site")
-
-    return response
-end
-
-function _M.get_authorization_url(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "get-authorization-url")
-    return response
-end
-
-function _M.get_token_by_code(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "get-tokens-by-code")
-    return response
-end
-
-function _M.get_user_info(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "get-user-info")
-    return response
-end
-
-function _M.get_logout_uri(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "get-logout-uri")
-    return response
-end
-
-function _M.get_access_token_by_refresh_token(conf)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, nil, "get-access-token-by-refresh-token")
-    return response
-end
-
-function _M.uma_rs_protect(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "uma-rs-protect")
-    return response
-end
-
-function _M.uma_rs_check_access(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "uma-rs-check-access")
-    return response
-end
-
-function _M.uma_rp_get_rpt(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "uma-rp-get-rpt")
-    return response
-end
-
-function _M.uma_rp_get_claims_gathering_url(conf, token)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, token, "uma-rp-get-claims-gathering-url")
-    return response
-end
-
-function _M.introspect_access_token(conf)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, nil, "introspect-access-token")
-    return response
-end
-
-function _M.introspect_rpt(conf)
-    local commandAsJson = json:encode(conf)
-    local response = _M.execute_http(conf, commandAsJson, nil, "introspect-rpt")
-    return response
+for i= 1, #api_without_token do
+    local api = api_without_token[i]
+    local endpoint = api:gsub("_", "%-")
+    _M[api] = function(oxd_host, params)
+        local commandAsJson = cjson:encode(params)
+        return execute_http(oxd_host, endpoint, params, nil, commandAsJson)
+    end
 end
 
 return _M
