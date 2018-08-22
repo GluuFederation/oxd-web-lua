@@ -27,13 +27,15 @@ function execute_http(oxd_host, command, token, jsonBody)
 
     ngx.log(ngx.DEBUG, "Host: ", oxd_host, "/", command, " Request_Body:", jsonBody, " response_body: ", res.body)
 
-    local response, err = cjson.decode(res.body)
-    if err then
-        ngx.log(ngx.ERR, "JSON decode error: ", err)
-        return { status = "error", description = "JSON decode error: ", err }
+    if res.status < 300 then
+        local json, err = cjson.decode(res.body)
+        if err then
+            ngx.log(ngx.ERR, "JSON decode error: ", err)
+            return { status = "error", description = "JSON decode error: ", err }
+        end
+        res.body = json
     end
-
-    return response
+    return res
 end
 
 
