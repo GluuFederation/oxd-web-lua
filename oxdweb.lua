@@ -54,7 +54,6 @@ local api_with_token = {
     "uma_rs_check_access",
     "uma_rp_get_rpt",
     "uma_rp_get_claims_gathering_url",
-    "register_site",
     "update_site",
     "introspect_access_token",
     "introspect_rpt",
@@ -64,7 +63,7 @@ local api_with_token = {
 -- @param params: request parameters to be encoded as JSON
 -- @return response:
 local api_without_token = {
-    "setup_client",
+    "register_site",
     "get_client_token",
 }
 
