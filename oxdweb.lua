@@ -56,6 +56,7 @@ local api_with_token = {
     "update_site",
     "introspect_access_token",
     "introspect_rpt",
+    "get_jwks",
 }
 
 -- @param oxd_host: host/port of oxd server
