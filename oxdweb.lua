@@ -45,7 +45,7 @@ end
 -- @return response:
 local api_with_token = {
     "get_authorization_url",
-    "get_token_by_code",
+    "get_tokens_by_code",
     "get_user_info",
     "get_logout_uri",
     "get_access_token_by_refresh_token",
