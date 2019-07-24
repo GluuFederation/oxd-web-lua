@@ -1,7 +1,7 @@
 local http = require "resty.http"
 local cjson = require "cjson.safe"
 
-function execute_http(oxd_host, command, token, jsonBody)
+local function execute_http(oxd_host, command, token, jsonBody)
     ngx.log(ngx.DEBUG, "Executing command: ", command)
     local httpc = http.new()
     local headers = {
