@@ -21,6 +21,7 @@ local function execute_http(oxd_host, command, token, jsonBody)
     })
 
     if err then
+        ngx.log(ngx.ERR, "Host: ", oxd_host, "/", command, " Request_Body:", jsonBody, " error: ", err)
         return nil, "resty-http error: " .. err
     end
 
